@@ -1,3 +1,5 @@
+import { normalizeImageUrl } from './petPresentation';
+
 function extractExtension(url: string, mimeType?: string): string {
   const extensionFromUrl = url.split('.').pop()?.split('?')[0]?.toLowerCase();
 
@@ -38,8 +40,10 @@ export function slugifyFileName(value: string): string {
 }
 
 export async function estimateRemoteFileSize(url: string): Promise<number | null> {
+  const normalizedUrl = normalizeImageUrl(url);
+
   try {
-    const headResponse = await fetch(url, { method: 'HEAD' });
+    const headResponse = await fetch(normalizedUrl, { method: 'HEAD' });
     const contentLength = headResponse.headers.get('content-length');
 
     if (contentLength) {
@@ -54,7 +58,7 @@ export async function estimateRemoteFileSize(url: string): Promise<number | null
   }
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(normalizedUrl);
 
     if (!response.ok) {
       return null;
@@ -71,7 +75,8 @@ export async function downloadRemoteFile(
   url: string,
   fileName: string,
 ): Promise<void> {
-  const response = await fetch(url);
+  const normalizedUrl = normalizeImageUrl(url);
+  const response = await fetch(normalizedUrl);
 
   if (!response.ok) {
     throw new Error(`Download failed with status ${response.status}`);
@@ -80,7 +85,7 @@ export async function downloadRemoteFile(
   const blob = await response.blob();
   const blobUrl = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
-  const extension = extractExtension(url, blob.type);
+  const extension = extractExtension(normalizedUrl, blob.type);
 
   anchor.href = blobUrl;
   anchor.download = `${slugifyFileName(fileName)}.${extension}`;
@@ -89,4 +94,3 @@ export async function downloadRemoteFile(
   anchor.remove();
   URL.revokeObjectURL(blobUrl);
 }
-

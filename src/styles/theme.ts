@@ -5,54 +5,49 @@ export type ThemeMode = 'light' | 'dark';
 const lightTheme: DefaultTheme = {
   mode: 'light',
   colors: {
-    background: '#f5efe6',
-    backgroundElevated: 'rgba(255, 255, 255, 0.82)',
-    backgroundStrong: '#fffaf4',
-    text: '#201714',
-    textMuted: '#66544c',
-    border: 'rgba(91, 67, 55, 0.14)',
-    primary: '#cd5d3c',
-    primaryStrong: '#a74529',
-    accent: '#167b77',
-    accentSoft: 'rgba(22, 123, 119, 0.16)',
-    success: '#12705f',
-    danger: '#b64034',
-    shadow: '0 24px 50px rgba(77, 44, 30, 0.12)',
+    background: '#f1f3f6',
+    backgroundElevated: '#2874f0',
+    backgroundStrong: '#ffffff',
+    text: '#212121',
+    textMuted: '#6b7280',
+    border: '#e5e7eb',
+    primary: '#2874f0',
+    primaryStrong: '#1d5ec6',
+    accent: '#fb641b',
+    accentSoft: '#e8f0fe',
+    success: '#118c4f',
+    danger: '#d93025',
+    shadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
   },
   gradients: {
-    page:
-      'radial-gradient(circle at top left, rgba(255, 193, 125, 0.35), transparent 35%), radial-gradient(circle at top right, rgba(22, 123, 119, 0.18), transparent 28%), linear-gradient(180deg, #fbf7f2 0%, #f2e7dc 100%)',
-    card:
-      'linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 250, 244, 0.86))',
+    page: 'linear-gradient(180deg, #f1f3f6 0%, #eef2f7 100%)',
+    card: 'linear-gradient(180deg, #ffffff, #ffffff)',
   },
 };
 
 const darkTheme: DefaultTheme = {
   mode: 'dark',
   colors: {
-    background: '#181311',
-    backgroundElevated: 'rgba(31, 25, 21, 0.86)',
-    backgroundStrong: '#261d19',
-    text: '#f7efe8',
-    textMuted: '#c2b0a5',
-    border: 'rgba(255, 226, 204, 0.12)',
-    primary: '#ff8d68',
-    primaryStrong: '#ff7045',
-    accent: '#5ce0ce',
-    accentSoft: 'rgba(92, 224, 206, 0.16)',
-    success: '#6ce3bf',
-    danger: '#ff8b7a',
-    shadow: '0 30px 60px rgba(0, 0, 0, 0.35)',
+    background: '#10141d',
+    backgroundElevated: '#1a56c4',
+    backgroundStrong: '#17202e',
+    text: '#f7fafc',
+    textMuted: '#a5b4c4',
+    border: '#273244',
+    primary: '#5c9cff',
+    primaryStrong: '#7db0ff',
+    accent: '#ff9f5a',
+    accentSoft: 'rgba(92, 156, 255, 0.16)',
+    success: '#5dd39e',
+    danger: '#ff8d85',
+    shadow: '0 12px 24px rgba(0, 0, 0, 0.28)',
   },
   gradients: {
-    page:
-      'radial-gradient(circle at top left, rgba(255, 141, 104, 0.18), transparent 34%), radial-gradient(circle at top right, rgba(92, 224, 206, 0.16), transparent 24%), linear-gradient(180deg, #15100d 0%, #1d1714 100%)',
-    card:
-      'linear-gradient(180deg, rgba(38, 29, 25, 0.94), rgba(25, 20, 17, 0.92))',
+    page: 'linear-gradient(180deg, #10141d 0%, #141b26 100%)',
+    card: 'linear-gradient(180deg, #17202e, #17202e)',
   },
 };
 
 export function buildTheme(mode: ThemeMode): DefaultTheme {
   return mode === 'light' ? lightTheme : darkTheme;
 }
-

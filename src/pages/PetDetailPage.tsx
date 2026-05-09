@@ -5,6 +5,7 @@ import { useAppContext } from '../context/AppContext';
 import { formatPetDate } from '../utils/date';
 import { getPetKey } from '../utils/pets';
 import { Badge, Button, Eyebrow, MetaText, Panel, SectionTitle } from '../styles/primitives';
+import { PetImage } from '../components/PetImage';
 
 const Layout = styled(motion.section)`
   display: grid;
@@ -21,10 +22,11 @@ const ImagePanel = styled(Panel)`
   padding: 0;
 `;
 
-const LargeImage = styled.img`
+const LargeImage = styled(PetImage)`
   width: 100%;
   aspect-ratio: 4 / 3;
-  object-fit: cover;
+  object-fit: contain;
+  background: #f8fafc;
 `;
 
 const DetailPanel = styled(Panel)`
@@ -94,7 +96,7 @@ export function PetDetailPage() {
       exit={{ opacity: 0, y: -10 }}
     >
       <ImagePanel>
-        <LargeImage src={pet.image_url} alt={pet.title} />
+        <LargeImage pet={pet} />
       </ImagePanel>
 
       <DetailPanel>
@@ -143,4 +145,3 @@ export function PetDetailPage() {
     </Layout>
   );
 }
-

@@ -3,8 +3,15 @@ import { useAppContext } from '../context/AppContext';
 import { useDebouncedValue } from './useDebouncedValue';
 import type { SortOption } from '../types/pet';
 import { sortPets } from '../utils/pets';
+import {
+  buildCategoryCounts,
+  inferPetCategory,
+  type PetCategory,
+  type RecencyFilter,
+  type SelectionFilter,
+} from '../utils/petPresentation';
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 12;
 
 export function usePets() {
   const {
@@ -19,18 +26,37 @@ export function usePets() {
   const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('date-desc');
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeCategories, setActiveCategories] = useState<PetCategory[]>([]);
+  const [selectionFilter, setSelectionFilter] = useState<SelectionFilter>('all');
+  const [recencyFilter, setRecencyFilter] = useState<RecencyFilter>('all');
   const debouncedQuery = useDebouncedValue(query, 350);
   const normalizedQuery = debouncedQuery.trim().toLowerCase();
+  const newestTimestamp = pets.reduce((latest, pet) => {
+    const timestamp = new Date(pet.created_at).getTime();
+    return Number.isNaN(timestamp) ? latest : Math.max(latest, timestamp);
+  }, 0);
+  const freshThreshold = newestTimestamp - 1000 * 60 * 60 * 24 * 180;
 
   const filteredPets = pets.filter((pet) => {
-    if (!normalizedQuery) {
-      return true;
-    }
-
-    return (
+    const matchesQuery =
+      !normalizedQuery ||
       pet.title.toLowerCase().includes(normalizedQuery) ||
-      pet.description.toLowerCase().includes(normalizedQuery)
-    );
+      pet.description.toLowerCase().includes(normalizedQuery);
+    const matchesCategory =
+      activeCategories.length === 0 ||
+      activeCategories.includes(inferPetCategory(pet));
+    const petKey = String(pet.id);
+    const matchesSelection =
+      selectionFilter === 'all' ||
+      (selectionFilter === 'selected' && selectedIds.includes(petKey)) ||
+      (selectionFilter === 'unselected' && !selectedIds.includes(petKey));
+    const petTimestamp = new Date(pet.created_at).getTime();
+    const matchesRecency =
+      recencyFilter === 'all' ||
+      (recencyFilter === 'fresh' && petTimestamp >= freshThreshold) ||
+      (recencyFilter === 'classic' && petTimestamp < freshThreshold);
+
+    return matchesQuery && matchesCategory && matchesSelection && matchesRecency;
   });
 
   const sortedPets = sortPets(filteredPets, sortBy);
@@ -46,7 +72,7 @@ export function usePets() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [normalizedQuery, sortBy]);
+  }, [normalizedQuery, sortBy, activeCategories, selectionFilter, recencyFilter]);
 
   function goToPage(page: number) {
     setCurrentPage(Math.min(Math.max(page, 1), totalPages));
@@ -55,6 +81,21 @@ export function usePets() {
 
   function selectAllFiltered() {
     selectMany(sortedPets.map((pet) => pet.id));
+  }
+
+  function toggleCategory(category: PetCategory) {
+    setActiveCategories((current) =>
+      current.includes(category)
+        ? current.filter((value) => value !== category)
+        : [...current, category],
+    );
+  }
+
+  function clearFilters() {
+    setActiveCategories([]);
+    setSelectionFilter('all');
+    setRecencyFilter('all');
+    setQuery('');
   }
 
   return {
@@ -76,6 +117,18 @@ export function usePets() {
     clearSelection,
     selectAllFiltered,
     goToPage,
+    activeCategories,
+    toggleCategory,
+    selectionFilter,
+    setSelectionFilter,
+    recencyFilter,
+    setRecencyFilter,
+    clearFilters,
+    categoryCounts: buildCategoryCounts(pets),
+    appliedFilterCount:
+      activeCategories.length +
+      (selectionFilter === 'all' ? 0 : 1) +
+      (recencyFilter === 'all' ? 0 : 1) +
+      (normalizedQuery ? 1 : 0),
   };
 }
-

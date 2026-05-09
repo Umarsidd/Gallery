@@ -12,6 +12,10 @@ const Grid = styled.section`
     grid-template-columns: repeat(2, minmax(0, 1fr));
   `}
 
+  @media (min-width: 1080px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   ${media.desktop`
     grid-template-columns: repeat(4, minmax(0, 1fr));
   `}
@@ -38,4 +42,3 @@ export function PetGrid({ pets, selectedIds, onToggleSelection }: PetGridProps) 
     </Grid>
   );
 }
-

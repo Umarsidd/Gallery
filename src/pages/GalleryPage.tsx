@@ -1,16 +1,32 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import styled from 'styled-components';
 import { useAppContext } from '../context/AppContext';
 import { usePets } from '../hooks/usePets';
-import { downloadRemoteFile, formatBytes } from '../utils/file';
+import { downloadRemoteFile } from '../utils/file';
 import { getPetKey } from '../utils/pets';
-import { HeroPanel } from '../components/HeroPanel';
+import { MarketplaceFilters } from '../components/MarketplaceFilters';
 import { SearchAndSortBar } from '../components/SearchAndSortBar';
 import { SkeletonGrid } from '../components/SkeletonGrid';
 import { ErrorState } from '../components/ErrorState';
 import { EmptyState } from '../components/EmptyState';
 import { PetGrid } from '../components/PetGrid';
 import { PaginationControls } from '../components/PaginationControls';
+
+const Layout = styled.div`
+  display: grid;
+  gap: 1rem;
+
+  @media (min-width: 1080px) {
+    grid-template-columns: 280px minmax(0, 1fr);
+    align-items: start;
+  }
+`;
+
+const ResultsColumn = styled.div`
+  display: grid;
+  gap: 1rem;
+`;
 
 export function GalleryPage() {
   const {
@@ -38,6 +54,15 @@ export function GalleryPage() {
     isEmptyResults,
     totalSelected,
     goToPage,
+    activeCategories,
+    toggleCategory,
+    selectionFilter,
+    setSelectionFilter,
+    recencyFilter,
+    setRecencyFilter,
+    clearFilters,
+    categoryCounts,
+    appliedFilterCount,
   } = usePets();
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -46,9 +71,6 @@ export function GalleryPage() {
     (total, pet) => total + Math.max(estimatedSizes[getPetKey(pet.id)] ?? 0, 0),
     0,
   );
-  const unknownSizeCount = selectedPets.filter(
-    (pet) => estimatedSizes[getPetKey(pet.id)] == null,
-  ).length;
 
   async function handleDownloadSelected() {
     if (selectedPets.length === 0) {
@@ -75,13 +97,13 @@ export function GalleryPage() {
   }
 
   function handleSelectAll() {
-    if (filteredPets.length === 0) {
+    if (visiblePets.length === 0) {
       pushToast('There are no current results to select.', 'info');
       return;
     }
 
-    selectMany(filteredPets.map((pet) => pet.id));
-    pushToast(`Selected ${filteredPets.length} pet(s).`, 'success');
+    selectMany(visiblePets.map((pet) => pet.id));
+    pushToast(`Selected ${visiblePets.length} visible pet(s).`, 'success');
   }
 
   function handleClearSelection() {
@@ -92,64 +114,75 @@ export function GalleryPage() {
   return (
     <motion.section
       key="gallery-page"
-      initial={{ opacity: 0, y: 18 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -12 }}
       transition={{ duration: 0.22 }}
     >
-      <HeroPanel
-        totalVisible={filteredPets.length}
-        totalSelected={totalSelected}
-        estimatedTotalSize={estimatedTotalSize}
-        unknownSizeCount={unknownSizeCount}
-        onClearSelection={handleClearSelection}
-        onDownloadSelected={handleDownloadSelected}
-        onSelectAll={handleSelectAll}
-        isDownloading={isDownloading}
-      />
-
-      <SearchAndSortBar
-        query={query}
-        onQueryChange={setQuery}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-      />
-
-      {loading ? <SkeletonGrid /> : null}
-      {!loading && error ? <ErrorState message={error} onRetry={refreshPets} /> : null}
-      {!loading && isEmpty ? (
-        <EmptyState
-          title="No pets were returned."
-          description="The API responded successfully, but the gallery is empty right now."
-          actionLabel="Reload gallery"
-          onAction={() => {
-            void refreshPets();
-          }}
+      <Layout>
+        <MarketplaceFilters
+          activeCategories={activeCategories}
+          categoryCounts={categoryCounts}
+          onToggleCategory={toggleCategory}
+          selectionFilter={selectionFilter}
+          onSelectionFilterChange={setSelectionFilter}
+          recencyFilter={recencyFilter}
+          onRecencyFilterChange={setRecencyFilter}
+          onClearFilters={clearFilters}
+          appliedFilterCount={appliedFilterCount}
         />
-      ) : null}
-      {!loading && isEmptyResults ? (
-        <EmptyState
-          title="No pets match this search."
-          description="Try a different search term or change the sort to reveal more matches."
-          actionLabel="Clear search"
-          onAction={() => setQuery('')}
-        />
-      ) : null}
-      {!loading && !error && !isEmpty && !isEmptyResults ? (
-        <>
-          <PetGrid
-            pets={visiblePets}
-            selectedIds={selectedIds}
-            onToggleSelection={toggleSelection}
+
+        <ResultsColumn>
+          <SearchAndSortBar
+            query={query}
+            onQueryChange={setQuery}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            totalResults={filteredPets.length}
+            totalSelected={totalSelected}
+            estimatedTotalSize={estimatedTotalSize}
+            isDownloading={isDownloading}
+            onSelectAll={handleSelectAll}
+            onClearSelection={handleClearSelection}
+            onDownloadSelected={handleDownloadSelected}
           />
-          <PaginationControls
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={goToPage}
-          />
-        </>
-      ) : null}
+
+          {loading ? <SkeletonGrid /> : null}
+          {!loading && error ? <ErrorState message={error} onRetry={refreshPets} /> : null}
+          {!loading && isEmpty ? (
+            <EmptyState
+              title="No pets were returned."
+              description="The API responded successfully, but the store is empty right now."
+              actionLabel="Reload gallery"
+              onAction={() => {
+                void refreshPets();
+              }}
+            />
+          ) : null}
+          {!loading && isEmptyResults ? (
+            <EmptyState
+              title="No pets match the current filters."
+              description="Try removing a sidebar filter, changing the search query, or resetting the current view."
+              actionLabel="Reset filters"
+              onAction={clearFilters}
+            />
+          ) : null}
+          {!loading && !error && !isEmpty && !isEmptyResults ? (
+            <>
+              <PetGrid
+                pets={visiblePets}
+                selectedIds={selectedIds}
+                onToggleSelection={toggleSelection}
+              />
+              <PaginationControls
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={goToPage}
+              />
+            </>
+          ) : null}
+        </ResultsColumn>
+      </Layout>
     </motion.section>
   );
 }
-
